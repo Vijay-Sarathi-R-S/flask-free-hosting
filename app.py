@@ -121,4 +121,4 @@ def confirmation(order_id):
     return render_template('confirmation.html', order=order)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
