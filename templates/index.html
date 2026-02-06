@@ -1,11 +1,27 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My First Flask Site</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
-    <h1>Flask Website Live 🚀</h1>
-    <p>This site will be hosted for FREE.</p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+    <div class="text-center py-5">
+        <h1 class="mb-4">Choose Your Goal & Time</h1>
+        <p class="lead mb-5">Get diet food recommendations tailored for gym freaks</p>
+        
+        <form action="/recommend" method="post" class="col-md-6 mx-auto">
+            <div class="mb-4">
+                <label for="goal" class="form-label fs-5">Goal</label>
+                <select class="form-select form-select-lg" name="goal" id="goal">
+                    <option value="weight_gain">Weight Gain</option>
+                    <option value="weight_loss">Weight Loss</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label for="time" class="form-label fs-5">Time of Day</label>
+                <select class="form-select form-select-lg" name="time" id="time">
+                    <option value="morning">Morning</option>
+                    <option value="afternoon">Afternoon</option>
+                    <option value="evening">Evening</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-success btn-lg w-100">Show Recommended Foods</button>
+        </form>
+    </div>
+{% endblock %}

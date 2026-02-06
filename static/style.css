@@ -1,11 +1,14 @@
 body {
-    background-color: #0f172a;
-    color: white;
-    font-family: Arial, sans-serif;
-    text-align: center;
-    padding-top: 100px;
+    background-color: #f8f9fa;
 }
-
-h1 {
-    color: #38bdf8;
+.navbar-brand {
+    font-weight: bold;
+}
+.card:hover {
+    transform: translateY(-5px);
+    transition: all 0.2s;
+}
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
 }
