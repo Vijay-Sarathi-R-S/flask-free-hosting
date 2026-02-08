@@ -1,68 +1,101 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+import random
+import time
+import uuid
+
 
 app = Flask(__name__)
 app.secret_key = 'this-is-my-gym-diet-app-secret-2025'
 
-# Database configuration
+# =========================
+# DATABASE CONFIG
+# =========================
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///orders.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# Create db instance
 db = SQLAlchemy(app)
 
-# Define the model right here (no separate file needed)
+# =========================
+# DATABASE MODELS
+# =========================
 class Order(db.Model):
+    __tablename__ = 'orders'   # IMPORTANT
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
     item_name = db.Column(db.String(100))
     item_price = db.Column(db.Float)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-# Create tables if they don't exist
+
+class Payment(db.Model):
+    __tablename__ = 'payments'   # IMPORTANT
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer)
+    user_id = db.Column(db.Integer)
+    transaction_id = db.Column(db.String(50), unique=True)
+    amount = db.Column(db.Float)
+    status = db.Column(db.String(20))
+    method = db.Column(db.String(20))   # UPI / CARD / COD
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
+
+
+
+
 with app.app_context():
     db.create_all()
 
-# Food data
+# =========================
+# LOCAL PAYMENT ENGINE (REALISTIC SIMULATION)
+# =========================
+def local_payment_gateway(amount, method):
+    time.sleep(1.5)  # simulate processing delay
+
+    if method == "UPI":
+        # UPI: very high success rate, rare pending/failure
+        status = random.choices(
+            ["SUCCESS", "PENDING", "FAILED"],
+            weights=[88, 7, 5]
+        )[0]
+
+    elif method == "CARD":
+        # Card: success + possible failure + some pending
+        status = random.choices(
+            ["SUCCESS", "FAILED", "PENDING"],
+            weights=[70, 20, 10]
+        )[0]
+
+    elif method == "COD":
+        # COD: always confirmed but payment pending
+        status = "PENDING"
+
+    else:
+        status = "FAILED"
+
+    txn_id = f"TXN{random.randint(100000, 999999)}"
+    return txn_id, status
+
+
+# =========================
+# FOOD DATA
+# =========================
 foods = {
     'morning': {
         'weight_gain': [
-            {'name': 'Oatmeal with Nuts & Banana', 'price': 180, 'desc': 'High-calorie breakfast for bulking', 'image': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'},
+            {'name': 'Oatmeal with Nuts & Banana', 'price': 180, 'desc': 'High-calorie breakfast', 'image': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'},
             {'name': 'Protein Pancakes', 'price': 220, 'desc': 'Whey protein + oats', 'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800'},
             {'name': 'Eggs & Whole Wheat Toast', 'price': 190, 'desc': 'Protein + carbs', 'image': 'https://images.unsplash.com/photo-1525351326368-efbb5cb6814d?w=800'}
         ],
         'weight_loss': [
-            {'name': 'Green Smoothie Bowl', 'price': 120, 'desc': 'Spinach, kale, low-fat yogurt', 'image': 'https://images.unsplash.com/photo-1546039907-7fa05f864c02?w=800'},
-            {'name': 'Boiled Egg Whites', 'price': 100, 'desc': 'High protein, low calorie', 'image': 'https://images.unsplash.com/photo-1582728720176-0f7e5e0e5c0e?w=800'},
-            {'name': 'Oats with Berries', 'price': 140, 'desc': 'Light and filling', 'image': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'}
-        ]
-    },
-    'afternoon': {
-        'weight_gain': [
-            {'name': 'Chicken Rice Bowl', 'price': 280, 'desc': 'Grilled chicken + brown rice', 'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800'},
-            {'name': 'Peanut Butter Banana Sandwich', 'price': 200, 'desc': 'Calorie dense snack', 'image': 'https://images.unsplash.com/photo-1559054663-e8d23213f55c?w=800'},
-            {'name': 'Tuna Salad Wrap', 'price': 250, 'desc': 'Protein + healthy fats', 'image': 'https://images.unsplash.com/photo-1627308594178-35e991e28a0a?w=800'}
-        ],
-        'weight_loss': [
-            {'name': 'Grilled Chicken Salad', 'price': 180, 'desc': 'Low-fat dressing', 'image': 'https://images.unsplash.com/photo-1505253758473-96b7015fcd40?w=800'},
-            {'name': 'Vegetable Stir Fry', 'price': 150, 'desc': 'No oil, high fiber', 'image': 'https://images.unsplash.com/photo-1511688878353-3a2f5be94cd7?w=800'},
-            {'name': 'Quinoa & Veggie Bowl', 'price': 200, 'desc': 'Balanced & light', 'image': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'}
-        ]
-    },
-    'evening': {
-        'weight_gain': [
-            {'name': 'Beef & Sweet Potato', 'price': 320, 'desc': 'High protein & carbs', 'image': 'https://images.unsplash.com/photo-1606857521015-7f9fcf423740?w=800'},
-            {'name': 'Mass Gainer Shake', 'price': 250, 'desc': 'Quick post-workout calories', 'image': 'https://images.unsplash.com/photo-1570545887596-2a6a3e0e4a9a?w=800'},
-            {'name': 'Greek Yogurt with Honey & Nuts', 'price': 220, 'desc': 'Recovery meal', 'image': 'https://images.unsplash.com/photo-1562440499-64c9a0a8c0e9?w=800'}
-        ],
-        'weight_loss': [
-            {'name': 'Grilled Fish', 'price': 220, 'desc': 'Omega-3 rich', 'image': 'https://images.unsplash.com/photo-1627308594178-35e991e28a0a?w=800'},
-            {'name': 'Cottage Cheese & Cucumber', 'price': 140, 'desc': 'Low calorie protein', 'image': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=800'},
-            {'name': 'Herbal Tea & Fruit Plate', 'price': 90, 'desc': 'Light evening snack', 'image': 'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800'}
+            {'name': 'Green Smoothie Bowl', 'price': 120, 'desc': 'Low calorie', 'image': 'https://images.unsplash.com/photo-1546039907-7fa05f864c02?w=800'},
+            {'name': 'Boiled Egg Whites', 'price': 100, 'desc': 'High protein', 'image': 'https://images.unsplash.com/photo-1582728720176-0f7e5e0e5c0e?w=800'},
+            {'name': 'Oats with Berries', 'price': 140, 'desc': 'Light meal', 'image': 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800'}
         ]
     }
 }
 
+# =========================
+# ROUTES
+# =========================
 @app.route('/')
 def home():
     return render_template('index.html')
@@ -71,25 +104,22 @@ def home():
 def recommend():
     goal = request.form.get('goal')
     time_of_day = request.form.get('time')
-    
+
     if not goal or not time_of_day:
         return redirect(url_for('home'))
-    
+
     menu = foods.get(time_of_day, {}).get(goal, [])
     return render_template('menu.html', menu=menu, goal=goal.capitalize(), time=time_of_day.capitalize())
 
 @app.route('/add_to_cart', methods=['POST'])
 def add_to_cart():
-    try:
-        item = {
-            'name': request.form.get('item'),
-            'price': float(request.form.get('price')),
-            'image': request.form.get('image')
-        }
-        session['cart'] = item  # single item only
-        return redirect(url_for('cart'))
-    except (TypeError, ValueError):
-        return "Invalid selection. Please try again.", 400
+    item = {
+        'name': request.form.get('item'),
+        'price': float(request.form.get('price')),
+        'image': request.form.get('image')
+    }
+    session['cart'] = item
+    return redirect(url_for('cart'))
 
 @app.route('/cart')
 def cart():
@@ -98,27 +128,91 @@ def cart():
         return redirect(url_for('home'))
     return render_template('cart.html', cart_item=cart_item, total=cart_item['price'])
 
-@app.route('/confirm_order', methods=['POST'])
-def confirm_order():
+# =========================
+# PAYMENT FLOW
+# =========================
+
+# Step 1 → Click Pay
+@app.route('/pay', methods=['POST'])
+def pay():
+    return redirect(url_for('payment_page'))
+
+# Step 2 → Payment UI
+@app.route('/payment_page')
+def payment_page():
+    cart_item = session.get('cart')
+    if not cart_item:
+        return redirect(url_for('home'))
+    return render_template('payment_page.html', cart_item=cart_item)
+
+# Step 3 → Process Payment
+@app.route('/process_payment', methods=['POST'])
+def process_payment():
     cart_item = session.get('cart')
     if not cart_item:
         return redirect(url_for('home'))
 
+    amount = cart_item['price']
+    method = request.form.get('method')  # UPI / CARD / COD (UI simulation)
+    user_id = session.get('user_id')
+
+    # Create Order
     new_order = Order(
+        user_id=user_id,
         item_name=cart_item['name'],
-        item_price=cart_item['price']
+        item_price=amount
     )
     db.session.add(new_order)
     db.session.commit()
 
+    # Local Payment Engine (fake gateway simulation)
+    txn_id, status = local_payment_gateway(amount, method)
+
+    # Store Payment
+    payment = Payment(
+        order_id=new_order.id,
+        user_id=user_id,
+        transaction_id=txn_id,
+        amount=amount,
+        status=status,
+        method=method
+    )
+    db.session.add(payment)
+    db.session.commit()
+
+    # Clear cart
     session.pop('cart', None)
 
-    return redirect(url_for('confirmation', order_id=new_order.id))
+    return redirect(url_for('payment_result', payment_id=payment.id))
 
-@app.route('/confirmation/<int:order_id>')
-def confirmation(order_id):
-    order = Order.query.get_or_404(order_id)
-    return render_template('confirmation.html', order=order)
+@app.route('/my_orders')
+def my_orders():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('home'))
 
+    orders = (
+        db.session.query(Order, Payment)
+        .join(Payment, Payment.order_id == Order.id)
+        .filter(Order.user_id == user_id)
+        .order_by(Order.created_at.desc())
+        .all()
+    )
+
+    return render_template('my_orders.html', orders=orders)
+
+@app.before_request
+def create_user_session():
+    if 'user_id' not in session:
+        session['user_id'] = str(uuid.uuid4())
+
+# Step 4 → Result Page
+@app.route('/payment_result/<int:payment_id>')
+def payment_result(payment_id):
+    payment = Payment.query.get_or_404(payment_id)
+    order = Order.query.get(payment.order_id)
+    return render_template('payment_result.html', payment=payment, order=order)
+
+# =========================
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
