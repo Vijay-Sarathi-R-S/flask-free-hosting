@@ -1,22 +1,256 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Payment Gateway</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Secure Payment - Complete Your Order</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        :root {
+            --primary: #4f46e5;       /* Indigo for trust */
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --bg: #f9fafb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --gray: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 20px 15px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .secure-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            background: rgba(255,255,255,0.25);
+            padding: 6px 14px;
+            border-radius: 30px;
+        }
+
+        .content {
+            padding: 24px 20px;
+        }
+
+        .order-summary {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+        }
+
+        .order-total {
+            border-top: 2px dashed #cbd5e1;
+            padding-top: 12px;
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        h3 {
+            margin: 0 0 16px;
+            font-size: 1.25rem;
+            color: var(--text);
+        }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover,
+        .option:focus-within {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+        }
+
+        .option input[type="radio"] {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--primary);
+        }
+
+        .method-icon {
+            font-size: 1.8rem;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f3f4f6;
+            border-radius: 10px;
+            color: var(--primary);
+        }
+
+        .method-details strong {
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .method-details small {
+            color: var(--gray);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 28px;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .security {
+            text-align: center;
+            margin-top: 24px;
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .security i {
+            color: var(--success);
+            margin-right: 6px;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                border-radius: 0;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h2>Complete Payment</h2>
 
-    <p><b>Item:</b> {{ cart_item.name }}</p>
-    <p><b>Amount:</b> ₹{{ cart_item.price }}</p>
+    <div class="container">
+        <div class="header">
+            <h1>Complete Payment</h1>
+            <div class="secure-badge">
+                <i class="fas fa-lock"></i> Secured by 256-bit Encryption
+            </div>
+        </div>
 
-    <form action="{{ url_for('process_payment') }}" method="POST">
-        <h3>Select Payment Method</h3>
+        <div class="content">
+            <div class="order-summary">
+                <div class="order-item">
+                    <span>Item</span>
+                    <strong>{{ cart_item.name }}</strong>
+                </div>
+                <div class="order-item order-total">
+                    <span>Total Amount</span>
+                    <span>₹{{ cart_item.price }}</span>
+                </div>
+            </div>
 
-        <input type="radio" name="method" value="UPI" required> UPI<br>
-        <input type="radio" name="method" value="CARD"> Debit/Credit Card<br>
-        <input type="radio" name="method" value="COD"> Cash on Delivery<br><br>
+            <h3>Select Payment Method</h3>
 
-        <button type="submit">Confirm Payment</button>
-    </form>
+            <form action="{{ url_for('process_payment') }}" method="POST">
+                <div class="payment-options">
+                    <label class="option">
+                        <input type="radio" name="method" value="UPI" required>
+                        <div class="method-icon">
+                            <i class="fas fa-qrcode"></i>
+                        </div>
+                        <div class="method-details">
+                            <strong>UPI</strong>
+                            <small>Google Pay, PhonePe, Paytm, BHIM & more</small>
+                        </div>
+                    </label>
+
+                    <label class="option">
+                        <input type="radio" name="method" value="CARD">
+                        <div class="method-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="method-details">
+                            <strong>Debit / Credit Card</strong>
+                            <small>Visa, Mastercard, RuPay</small>
+                        </div>
+                    </label>
+
+                    <label class="option">
+                        <input type="radio" name="method" value="COD">
+                        <div class="method-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="method-details">
+                            <strong>Cash on Delivery</strong>
+                            <small>Pay in cash when item is delivered</small>
+                        </div>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn">Pay ₹{{ cart_item.price }} Securely</button>
+            </form>
+
+            <div class="security">
+                <i class="fas fa-shield-alt"></i>
+                Your payment is 100% secure. We never store your card details.
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
