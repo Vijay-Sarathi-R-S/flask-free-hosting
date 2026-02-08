@@ -1,27 +1,212 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Payment Status</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <style>
-        body { font-family: Arial; text-align: center; padding: 50px; }
-        .box { max-width: 400px; margin: auto; padding: 30px; border-radius: 10px; }
-        .SUCCESS { background: #e8fff1; color: #0a7a3d; }
-        .FAILED { background: #ffe8e8; color: #a00000; }
-        .PENDING { background: #fff7e0; color: #a67c00; }
+        :root {
+            --primary: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f9fafb;
+            --card: #ffffff;
+            --text: #1f2937;
+            --gray: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 480px;
+            width: 100%;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .status-header {
+            padding: 40px 24px 24px;
+        }
+
+        .status-icon {
+            font-size: 5rem;
+            margin-bottom: 16px;
+            line-height: 1;
+        }
+
+        .SUCCESS .status-icon { color: var(--success); }
+        .FAILED  .status-icon { color: var(--danger); }
+        .PENDING .status-icon { color: var(--warning); }
+
+        .status-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .SUCCESS .status-title { color: var(--success); }
+        .FAILED  .status-title { color: var(--danger); }
+        .PENDING .status-title { color: var(--warning); }
+
+        .details {
+            padding: 0 32px 32px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 14px 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 1.05rem;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row strong {
+            color: var(--text);
+        }
+
+        .detail-row span {
+            color: var(--gray);
+            font-weight: 500;
+        }
+
+        .amount {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 24px 0;
+        }
+
+        .message {
+            font-size: 1rem;
+            color: var(--gray);
+            margin: 16px 0 32px;
+            line-height: 1.6;
+        }
+
+        .btn {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 14px 32px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #4338ca;
+        }
+
+        .footer {
+            padding: 20px;
+            background: #f1f5f9;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .footer i {
+            color: var(--success);
+            margin-right: 6px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .container {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @media (max-width: 480px) {
+            .status-icon { font-size: 4rem; }
+            .status-title { font-size: 1.6rem; }
+        }
     </style>
 </head>
 <body>
 
-<div class="box {{ payment.status }}">
-    <h2>Payment {{ payment.status }}</h2>
-    <p><b>Transaction ID:</b> {{ payment.transaction_id }}</p>
-    <p><b>Item:</b> {{ order.item_name }}</p>
-    <p><b>Amount:</b> ₹{{ payment.amount }}</p>
-    <p><b>Status:</b> {{ payment.status }}</p>
-</div>
+    <div class="container {{ payment.status }}">
 
-<br>
-<a href="{{ url_for('home') }}">Back to Home</a>
+        <div class="status-header">
+            {% if payment.status == 'SUCCESS' %}
+                <i class="fas fa-check-circle status-icon"></i>
+                <div class="status-title">Payment Successful!</div>
+            {% elif payment.status == 'FAILED' %}
+                <i class="fas fa-times-circle status-icon"></i>
+                <div class="status-title">Payment Failed</div>
+            {% else %}
+                <i class="fas fa-hourglass-half status-icon"></i>
+                <div class="status-title">Payment Pending</div>
+            {% endif %}
+        </div>
+
+        <div class="details">
+            <div class="detail-row">
+                <strong>Transaction ID</strong>
+                <span>{{ payment.transaction_id }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Item</strong>
+                <span>{{ order.item_name }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Amount</strong>
+                <span class="amount">₹{{ payment.amount }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Status</strong>
+                <span>{{ payment.status }}</span>
+            </div>
+
+            <div class="message">
+                {% if payment.status == 'SUCCESS' %}
+                    Thank you! Your payment has been processed successfully.<br>
+                    Your order is now being prepared.
+                {% elif payment.status == 'FAILED' %}
+                    Sorry, your payment could not be processed.<br>
+                    Please try again or use a different payment method.
+                {% else %}
+                    Your payment is being processed.<br>
+                    Please wait a moment or check back later.
+                {% endif %}
+            </div>
+
+            <a href="{{ url_for('home') }}" class="btn">Back to Home</a>
+        </div>
+
+        <div class="footer">
+            <i class="fas fa-shield-alt"></i>
+            Secured Payment • Your transaction is protected
+        </div>
+
+    </div>
 
 </body>
 </html>
