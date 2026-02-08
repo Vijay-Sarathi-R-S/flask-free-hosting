@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Menu{% endblock %}
+{% block content %}
+    <h1 class="text-center mb-5">Recommended Meals<br><small class="text-muted">{{ goal }} - {{ time }}</small></h1>
+    
+    <div class="row">
+        {% for food in menu %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="{{ food.image }}" class="card-img-top" alt="{{ food.name }}" style="height: 220px; object-fit: cover;">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ food.name }}</h5>
+                        <p class="card-text flex-grow-1">{{ food.desc }}</p>
+                        <p class="card-text fw-bold fs-5 text-success">₹{{ food.price }}</p>
+                        <form action="/add_to_cart" method="post">
+                            <input type="hidden" name="item" value="{{ food.name }}">
+                            <input type="hidden" name="price" value="{{ food.price }}">
+                            <input type="hidden" name="image" value="{{ food.image }}">
+                            <button type="submit" class="btn btn-outline-success w-100">Select This Meal</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Order Confirmed{% endblock %}
+{% block content %}
+    <div class="text-center py-5">
+        <div class="alert alert-success" role="alert">
+            <h1 class="mb-4">Order Placed Successfully!</h1>
+            <h4>Order ID: #{{ order.id }}</h4>
+            <p class="fs-5 mt-4">
+                Item: <strong>{{ order.item_name }}</strong><br>
+                Amount: <strong>₹{{ order.item_price }}</strong>
+            </p>
+            <hr>
+            <p class="lead">Your order is being prepared.<br>Estimated delivery: 30–45 minutes (Salem area)</p>
+            <p>Thank you for choosing Gym Freaks Diet!</p>
+        </div>
+        
+        <a href="/" class="btn btn-primary btn-lg mt-4">Place Another Order</a>
+    </div>
+{% endblock %}
